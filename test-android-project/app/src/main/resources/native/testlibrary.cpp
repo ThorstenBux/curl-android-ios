@@ -21,18 +21,49 @@
 size_t curlCallback(char *data, size_t size, size_t count, void* userdata);
 
 BOOL downloadUrl(const char* url, LPCURL_DOWNLOAD_OBJECT downloadObject ) {
+    CURLcode curlErr;
 	CURL* curl = curl_easy_init();
+	char curlErrorBuf[CURL_ERROR_SIZE];
+
+
+	curlErr = curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curlErrorBuf);
+
 	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, TRUE);
+	//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, TRUE);
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, TRUE);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curlCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, downloadObject);
+	//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curlCallback);
+	//curl_easy_setopt(curl, CURLOPT_WRITEDATA, downloadObject);
+
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+	//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+	//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+
+    // Build the form.
+    struct curl_httppost *post = NULL;
+    struct curl_httppost *last = NULL;
+
+	CURLFORMcode code = curl_formadd(&post, &last, CURLFORM_COPYNAME, "version", CURLFORM_COPYCONTENTS, "1",CURLFORM_END);
+
+    if(code != CURL_FORMADD_OK){
+        LOGI("CURL FORMADD error: %d", code);
+    }
+
+    curlErr = curl_easy_setopt(curl, CURLOPT_HTTPPOST,post);
+
+    if (curlErr != CURLE_OK) {
+        LOGI("Error performing CURL operation: %s (%d). %s.\n",
+               curl_easy_strerror(curlErr), curlErr, curlErrorBuf);
+    }
 
 	CURLcode res = curl_easy_perform(curl);
+	curl_formfree(post);
+
 	if (res != CURLE_OK){
 	    LOGI("CURL failed with error code %d", res);
+	}else{
+	    LOGI("Performed CURL operation res: (%d).\n",
+               res);
 	}
 	curl_easy_cleanup(curl);
 	return res == CURLE_OK;

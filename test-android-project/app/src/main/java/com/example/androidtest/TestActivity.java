@@ -16,7 +16,8 @@ public class TestActivity extends Activity{
 
 		new Thread(){
 			public void run(){
-				String url = "https://www.google.com";
+				String url = "https://omega.artoolworks.com/app/calib_camera/upload.php";
+				//String url = "https://omega.artoolworks.com/app/calib_camera/upload.php";
 				Log.i("TestActivity", "Requesting URL to download: " + url);
 
 				byte[] content = downloadUrl(url);
